@@ -25,7 +25,7 @@ jobs:
           cd $env:VCPKG_INSTALLATION_ROOT
           git pull
           .\bootstrap-vcpkg.bat
-          .\vcpkg.exe install sdl2:x64-windows libusb:x64-windows nlohmann-json:x64-windows
+          .\vcpkg.exe install sdl2:x64-windows nlohmann-json:x64-windows
         shell: pwsh
 
       - name: Configure CMake
