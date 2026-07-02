@@ -42,7 +42,7 @@ jobs:
       - name: Deploy Qt runtime dependencies (windeployqt)
         run: |
           $exe = Get-ChildItem -Path build -Recurse -Filter "CrystalWiiLauncher.exe" | Select-Object -First 1
-          & "$env:Qt6_DIR/bin/windeployqt.exe" $exe.FullName --release --no-translations
+          windeployqt.exe $exe.FullName --release --no-translations
         shell: pwsh
 
       - name: Package into a zip
