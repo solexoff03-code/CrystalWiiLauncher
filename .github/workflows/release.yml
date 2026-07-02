@@ -1,19 +1,10 @@
-# =============================================================================
-#  release.yml - Builds Crystal Wii Launcher on Windows and publishes a
-#  downloadable .zip as a GitHub Release, automatically, whenever a tag
-#  matching "v*" (e.g. v0.1.0) is pushed.
-#
-#  Equivalent to what electron-builder + a GitHub Actions workflow does for
-#  Electron apps, but for a C++/Qt6/CMake project: no npm involved here,
-#  Qt6 + vcpkg dependencies are installed on the runner instead.
-# =============================================================================
 name: Build and Release
 
 on:
   push:
     tags:
       - "v*"
-  workflow_dispatch: # allows manually triggering a build from the Actions tab, without a tag
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -29,20 +20,18 @@ jobs:
           version: "6.7.*"
           modules: "qtmultimedia"
 
-      - name: Set up vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgGitCommitId: "master"
-
-      - name: Install dependencies via vcpkg
+      - name: Update vcpkg and install dependencies
         run: |
-          vcpkg install sdl2:x64-windows libusb:x64-windows nlohmann-json:x64-windows
+          cd $env:VCPKG_INSTALLATION_ROOT
+          git pull
+          .\bootstrap-vcpkg.bat
+          .\vcpkg.exe install sdl2:x64-windows libusb:x64-windows nlohmann-json:x64-windows
         shell: pwsh
 
       - name: Configure CMake
         run: |
           cmake -B build -S . `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
             -DCMAKE_BUILD_TYPE=Release
         shell: pwsh
 
