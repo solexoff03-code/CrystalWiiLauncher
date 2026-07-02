@@ -1,0 +1,83 @@
+# =============================================================================
+#  release.yml - Builds Crystal Wii Launcher on Windows and publishes a
+#  downloadable .zip as a GitHub Release, automatically, whenever a tag
+#  matching "v*" (e.g. v0.1.0) is pushed.
+#
+#  Equivalent to what electron-builder + a GitHub Actions workflow does for
+#  Electron apps, but for a C++/Qt6/CMake project: no npm involved here,
+#  Qt6 + vcpkg dependencies are installed on the runner instead.
+# =============================================================================
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: # allows manually triggering a build from the Actions tab, without a tag
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.7.*"
+          modules: "qtmultimedia"
+
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: "master"
+
+      - name: Install dependencies via vcpkg
+        run: |
+          vcpkg install sdl2:x64-windows libusb:x64-windows nlohmann-json:x64-windows
+        shell: pwsh
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCMAKE_BUILD_TYPE=Release
+        shell: pwsh
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+        shell: pwsh
+
+      - name: Deploy Qt runtime dependencies (windeployqt)
+        run: |
+          $exe = Get-ChildItem -Path build -Recurse -Filter "CrystalWiiLauncher.exe" | Select-Object -First 1
+          & "$env:Qt6_DIR/bin/windeployqt.exe" $exe.FullName --release --no-translations
+        shell: pwsh
+
+      - name: Package into a zip
+        run: |
+          $exe = Get-ChildItem -Path build -Recurse -Filter "CrystalWiiLauncher.exe" | Select-Object -First 1
+          $stageDir = "package/CrystalWiiLauncher"
+          New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
+          Copy-Item -Path "$($exe.DirectoryName)\*" -Destination $stageDir -Recurse -Force
+          Copy-Item -Path "assets" -Destination "$stageDir\assets" -Recurse -Force
+          Copy-Item -Path "README.md","LICENSE" -Destination $stageDir -Force
+          Compress-Archive -Path $stageDir -DestinationPath "CrystalWiiLauncher-${{ github.ref_name }}-win64.zip"
+        shell: pwsh
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CrystalWiiLauncher-windows
+          path: CrystalWiiLauncher-*.zip
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: CrystalWiiLauncher-*.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
