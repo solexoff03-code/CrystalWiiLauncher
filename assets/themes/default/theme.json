@@ -1,0 +1,30 @@
+{
+  "name": "Crystal Default",
+  "author": "Crystal Wii Launcher Community",
+  "description": "Default original theme. No Nintendo assets are used anywhere in this theme.",
+  "colors": {
+    "background_top": "#dff3ff",
+    "background_bottom": "#a9d8f5",
+    "channel_border": "#ffffff",
+    "channel_hover_glow": "#7ec8ff",
+    "text_primary": "#123047",
+    "accent": "#3aa0e8"
+  },
+  "fonts": {
+    "primary": "assets/fonts/CrystalSans-Regular.ttf",
+    "bold": "assets/fonts/CrystalSans-Bold.ttf"
+  },
+  "sounds": {
+    "hover": "audio/sfx/hover.wav",
+    "select": "audio/sfx/select.wav",
+    "back": "audio/sfx/back.wav",
+    "disc_insert": "audio/sfx/disc_insert.wav",
+    "startup": "audio/sfx/startup.wav"
+  },
+  "animation": {
+    "channel_grid_columns": 4,
+    "channel_spacing": 24,
+    "hover_scale": 1.08,
+    "transition_ms": 220
+  }
+}
